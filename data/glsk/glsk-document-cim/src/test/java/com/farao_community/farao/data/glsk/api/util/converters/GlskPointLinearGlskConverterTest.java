@@ -58,7 +58,7 @@ public class GlskPointLinearGlskConverterTest {
     @Test
     public void testConvertGlskPointToLinearGlskB42Country() {
 
-        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointCountry);
+        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointCountry, 0);
         linearGlsk.getGLSKs().forEach((k, v) -> LOGGER.info("GenCountry: " + k + "; factor = " + v)); //log
         double totalfactor = linearGlsk.getGLSKs().values().stream().mapToDouble(Double::valueOf).sum();
         Assert.assertTrue(DoubleMath.fuzzyEquals(1.0, totalfactor, 0.0001));
@@ -67,7 +67,7 @@ public class GlskPointLinearGlskConverterTest {
     @Test
     public void testConvertGlskPointToLinearGlskB42CountryQuantity() {
 
-        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointCountryQuantity);
+        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointCountryQuantity, 0);
         linearGlsk.getGLSKs().forEach((k, v) -> LOGGER.info("Country: " + k + "; factor = " + v)); //log
         double totalfactor = linearGlsk.getGLSKs().values().stream().mapToDouble(Double::valueOf).sum();
         Assert.assertTrue(DoubleMath.fuzzyEquals(1.0, totalfactor, 0.0001));
@@ -75,7 +75,7 @@ public class GlskPointLinearGlskConverterTest {
 
     @Test
     public void testConvertGlskPointToLinearGlskB42Explicit() {
-        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointExplicitGskLsk);
+        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointExplicitGskLsk, 0);
         linearGlsk.getGLSKs().forEach((k, v) -> LOGGER.info("Explicit: " + k + "; factor = " + v)); //log
         double totalfactor = linearGlsk.getGLSKs().values().stream().mapToDouble(Double::valueOf).sum();
         Assert.assertTrue(DoubleMath.fuzzyEquals(1.0, totalfactor, 0.0001));
@@ -83,7 +83,7 @@ public class GlskPointLinearGlskConverterTest {
 
     @Test
     public void testConvertGlskPointToLinearGlskB43() {
-        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointParticipationFactorGskLsk);
+        LinearGlsk linearGlsk = GlskPointLinearGlskConverter.convert(testNetwork, glskPointParticipationFactorGskLsk, 0);
         linearGlsk.getGLSKs().forEach((k, v) -> LOGGER.info("Factor: " + k + "; factor = " + v)); //log
         double totalfactor = linearGlsk.getGLSKs().values().stream().mapToDouble(Double::valueOf).sum();
         Assert.assertTrue(DoubleMath.fuzzyEquals(1.0, totalfactor, 0.0001));

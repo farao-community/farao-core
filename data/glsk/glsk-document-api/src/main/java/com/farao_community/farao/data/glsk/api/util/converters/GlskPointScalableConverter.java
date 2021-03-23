@@ -39,7 +39,7 @@ public final class GlskPointScalableConverter {
      * @param glskPoint GLSK Point
      * @return powsybl-core Scalable
      */
-    public static Scalable convert(Network network, AbstractGlskPoint glskPoint) {
+    public static Scalable convert(Network network, AbstractGlskPoint glskPoint, int order) {
         Objects.requireNonNull(glskPoint.getGlskShiftKeys());
         if (!glskPoint.getGlskShiftKeys().get(0).getBusinessType().equals("B45")) {
             //B42 and B43 proportional
@@ -47,6 +47,9 @@ public final class GlskPointScalableConverter {
             List<Scalable> scalables = new ArrayList<>();
 
             for (AbstractGlskShiftKey glskShiftKey : glskPoint.getGlskShiftKeys()) {
+                if (glskShiftKey.getOrderInHybridCseGlsk() != order) {
+                    continue;
+                }
                 if (glskShiftKey.getBusinessType().equals("B42") && glskShiftKey.getRegisteredResourceArrayList().isEmpty()) {
                     //B42 country
                     convertCountryProportional(network, glskShiftKey, percentages, scalables);

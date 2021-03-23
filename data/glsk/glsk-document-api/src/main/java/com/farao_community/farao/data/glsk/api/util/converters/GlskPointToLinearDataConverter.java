@@ -15,5 +15,5 @@ import com.powsybl.iidm.network.Network;
  */
 public interface GlskPointToLinearDataConverter<I> {
 
-    I convert(Network network, AbstractGlskPoint glskPoint);
+    I convert(Network network, AbstractGlskPoint glskPoint, int order);
 }

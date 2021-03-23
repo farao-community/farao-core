@@ -99,10 +99,15 @@ public class CseGlskShiftKey extends AbstractGlskShiftKey {
         } else {
             throw new GlskException("in GlskShiftKey UCTE constructor: unknown ucteBusinessType: " + businessType);
         }
-        this.quantity = Double.valueOf(((Element) glskBlockElement.getElementsByTagName("Factor").item(0)).getAttribute("v"));
+        this.quantity  = (0 == glskBlockElement.getElementsByTagName("Factor").getLength()) ? 1.0 :
+                Double.valueOf(((Element) glskBlockElement.getElementsByTagName("Factor").item(0)).getAttribute("v")); //"factor" is optional
         this.glskShiftKeyInterval = pointInterval;
         this.subjectDomainmRID = subjectDomainmRID;
         this.registeredResourceArrayList = new ArrayList<>();
+        this.orderInHybridCseGlsk  = (0 == glskBlockElement.getElementsByTagName("Order").getLength()) ? DEFAULT_ORDER :
+                Integer.parseInt((glskBlockElement.getElementsByTagName("Order").item(0)).getTextContent()); //order in hybrid cse glsk
+        this.maximumShift = (0 == glskBlockElement.getElementsByTagName("MaximumShift").getLength()) ? DEFAULT_MAXIMUM_SHIFT :
+                Double.parseDouble(((Element) glskBlockElement.getElementsByTagName("MaximumShift").item(0)).getAttribute("v")); //maximum shift in hybrid cse glsk
     }
 
     private void importImplicitProportionalBlock(Element glskBlockElement, String businessType) {

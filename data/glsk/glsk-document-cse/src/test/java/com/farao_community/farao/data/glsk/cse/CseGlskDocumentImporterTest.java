@@ -198,4 +198,37 @@ public class CseGlskDocumentImporterTest {
         assertEquals(3000., network.getGenerator("FFR3AA1 _generator").getTargetP(), EPSILON);
     }
 
+    @Test
+    public void checkCseGlskDocumentImporterCorrectlyImportHybridGskBlocks() {
+        Network network = Importers.loadNetwork("testCase.xiidm", getClass().getResourceAsStream("/testCase.xiidm"));
+        CseGlskDocument cseGlskDocument = CseGlskDocument.importGlsk(getClass().getResourceAsStream("/testGlskHybrid.xml"));
+
+        List<AbstractGlskPoint> list = cseGlskDocument.getGlskPoints("10YCH-SWISSGRIDZ");
+        assertFalse(list.isEmpty());
+        assertEquals(1, list.size());
+        assertEquals(2, list.get(0).getGlskShiftKeys().size());
+        assertEquals(2, list.get(0).getGlskShiftKeys().get(0).getRegisteredResourceArrayList().size());
+        assertEquals(1, (list.get(0).getGlskShiftKeys().get(0)).getOrderInHybridCseGlsk());
+        double maximumShift = (list.get(0).getGlskShiftKeys().get(0)).getMaximumShift();
+        assertEquals(1000.0, maximumShift, EPSILON);
+        assertEquals(2, (list.get(0).getGlskShiftKeys().get(1)).getOrderInHybridCseGlsk());
+        assertEquals(Integer.MAX_VALUE, (list.get(0).getGlskShiftKeys().get(1)).getMaximumShift(), EPSILON);
+
+        Scalable hybridGlsk1 = cseGlskDocument.getZonalScalable(network).getData("10YCH-SWISSGRIDZ@1");
+        assertNotNull(hybridGlsk1);
+        assertEquals(2000., network.getGenerator("FFR1AA1 _generator").getTargetP(), EPSILON);
+        assertEquals(2000., network.getGenerator("FFR2AA1 _generator").getTargetP(), EPSILON);
+        hybridGlsk1.scale(network, maximumShift);
+        assertEquals(2500., network.getGenerator("FFR1AA1 _generator").getTargetP(), EPSILON);
+        assertEquals(2500., network.getGenerator("FFR2AA1 _generator").getTargetP(), EPSILON);
+
+        Scalable hybridGlsk2 = cseGlskDocument.getZonalScalable(network).getData("10YCH-SWISSGRIDZ@2");
+        assertNotNull(hybridGlsk2);
+
+        List<AbstractGlskPoint> list2 = cseGlskDocument.getGlskPoints("FR_MANUAL");
+        assertFalse(list2.isEmpty());
+        assertEquals(1, list2.size());
+        assertEquals(1, list2.get(0).getGlskShiftKeys().size());
+        assertEquals(2, list2.get(0).getGlskShiftKeys().get(0).getRegisteredResourceArrayList().size());
+    }
 }

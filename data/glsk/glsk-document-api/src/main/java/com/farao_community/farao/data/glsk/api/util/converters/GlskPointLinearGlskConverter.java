@@ -41,7 +41,7 @@ public final class GlskPointLinearGlskConverter {
      * @param glskPoint GLSK Point
      * @return farao-core LinearGlsk
      */
-    public static LinearGlsk convert(Network network, AbstractGlskPoint glskPoint) {
+    public static LinearGlsk convert(Network network, AbstractGlskPoint glskPoint, int order) {
 
         Map<String, Float> linearGlskMap = new HashMap<>();
         String linearGlskId = glskPoint.getSubjectDomainmRID() + ":" + glskPoint.getPointInterval().toString();

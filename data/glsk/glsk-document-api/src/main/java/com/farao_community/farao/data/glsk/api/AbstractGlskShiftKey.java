@@ -15,7 +15,6 @@ import java.util.List;
  * @author Pengbo Wang {@literal <pengbo.wang@rte-international.com>}
  */
 public abstract class AbstractGlskShiftKey {
-
     /**
      * business type of shift key. B42, B43, B45
      */
@@ -50,6 +49,18 @@ public abstract class AbstractGlskShiftKey {
      */
     protected String flowDirection;
 
+    protected static final int DEFAULT_ORDER = 0;
+    /**
+     * order in hybrid cse glsk
+     */
+    protected int orderInHybridCseGlsk = DEFAULT_ORDER;
+
+    protected static final int DEFAULT_MAXIMUM_SHIFT = Integer.MAX_VALUE;
+    /**
+     * maximum shift in hybrid cse glsk
+     */
+    protected double maximumShift = DEFAULT_MAXIMUM_SHIFT;
+
     /**
      * @return debug to string
      */
@@ -59,7 +70,9 @@ public abstract class AbstractGlskShiftKey {
                 "\tPsrType = " + psrType + "\n" +
                 "\tQuantity = " + quantity + "\n" +
                 "\tGlskShiftKeyInterval = " + glskShiftKeyInterval + "\n" +
-                "\tRegisteredResource size = " + registeredResourceArrayList.size() + "\n";
+                "\tRegisteredResource size = " + registeredResourceArrayList.size() + "\n" +
+                "\tOrder = " + orderInHybridCseGlsk + "\n" +
+                "\tMaximumShift = " + maximumShift + "\n";
     }
 
     /**
@@ -130,6 +143,20 @@ public abstract class AbstractGlskShiftKey {
      */
     public String getFlowDirection() {
         return flowDirection;
+    }
+
+    /**
+     * getter maximum shift in hybrid cse glsk
+     */
+    public double getMaximumShift() {
+        return maximumShift;
+    }
+
+    /**
+     * getter order in hybrid cse glsk
+     */
+    public int getOrderInHybridCseGlsk() {
+        return orderInHybridCseGlsk;
     }
 
 }
