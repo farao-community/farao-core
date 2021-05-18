@@ -78,9 +78,28 @@ public class CoreProblemFiller implements ProblemFiller {
      * Filters out range actions that should not be used in the optimization, even if they are available in the perimeter
      */
     private static Set<RangeAction> computeAvailableRangeActions(RaoData raoData, Map<String, Integer> maxPstPerTso) {
-        Set<RangeAction> rangeActions = removeRangeActionsWithWrongInitialSetpoint(raoData.getAvailableRangeActions(), raoData);
+        Set<RangeAction> rangeActions = removeAlignedRangeActionsWithDifferentInitialSetpoints(raoData.getAvailableRangeActions(), raoData);
+        rangeActions = removeRangeActionsWithWrongInitialSetpoint(rangeActions, raoData);
         rangeActions = removeRangeActionsIfMaxNumberReached(rangeActions, raoData, maxPstPerTso);
         return rangeActions;
+    }
+
+    /**
+     * If a group of aligned range actions do not have the same initial setpoint, this function filters them out
+     */
+    private static Set<RangeAction> removeAlignedRangeActionsWithDifferentInitialSetpoints(Set<RangeAction> rangeActionsToFilter, RaoData raoData) {
+        Set<RangeAction> filteredRangeActions = new HashSet<>(rangeActionsToFilter);
+        Set<String> groups = filteredRangeActions.stream().map(RangeAction::getGroupId)
+                .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+        for (String group : groups) {
+            Set<RangeAction> groupRangeActions = filteredRangeActions.stream().filter(rangeAction -> rangeAction.getGroupId().isPresent() && rangeAction.getGroupId().get().equals(group)).collect(Collectors.toSet());
+            double preperimeterSetPoint = getRangeActionPreperimeterSetpoint(groupRangeActions.iterator().next(), raoData);
+            if (groupRangeActions.stream().anyMatch(rangeAction -> Math.abs(getRangeActionPreperimeterSetpoint(rangeAction, raoData) - preperimeterSetPoint) > 1e-6)) {
+                LOGGER.warn("Range actions of group {} do not have the same initial setpoint. They will be filtered out of the linear problem.", group);
+                filteredRangeActions.removeAll(groupRangeActions);
+            }
+        }
+        return filteredRangeActions;
     }
 
     /**

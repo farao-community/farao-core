@@ -157,6 +157,17 @@ public class RaoParametersTest {
     }
 
     @Test
+    public void checkPostCheckConfig() {
+        MapModuleConfig moduleConfig = platformCfg.createModuleConfig("rao-parameters");
+        moduleConfig.setStringProperty("post-check-rao-results", Objects.toString(true));
+
+        RaoParameters parameters = new RaoParameters();
+        RaoParameters.load(parameters, platformCfg);
+
+        assertTrue(parameters.isPostCheckRaoResults());
+    }
+
+    @Test
     public void testUpdatePtdfWithTopo() {
         assertFalse(RaoParameters.LoopFlowApproximationLevel.FIXED_PTDF.shouldUpdatePtdfWithTopologicalChange());
         assertTrue(RaoParameters.LoopFlowApproximationLevel.UPDATE_PTDF_WITH_TOPO.shouldUpdatePtdfWithTopologicalChange());

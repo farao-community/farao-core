@@ -17,6 +17,7 @@ import com.farao_community.farao.data.crac_impl.remedial_action.range_action.Pst
 import com.farao_community.farao.data.crac_impl.usage_rule.OnStateImpl;
 import com.farao_community.farao.data.crac_impl.utils.CommonCracCreation;
 import com.farao_community.farao.data.crac_impl.utils.NetworkImportsUtil;
+import com.farao_community.farao.data.crac_result_extensions.RangeActionResultExtension;
 import com.farao_community.farao.data.crac_result_extensions.ResultVariantManager;
 import com.farao_community.farao.rao_api.RaoParameters;
 import com.farao_community.farao.rao_commons.RaoData;
@@ -609,5 +610,49 @@ public class CoreProblemFillerTest extends AbstractFillerTest {
     public void testFilterWrongRangeActions5() {
         // PST has tap limits of -15 / +15
         testFilterWrongRangeActions(16, true);
+    }
+
+    @Test
+    public void testFilterOutGroup() {
+        // a group of PSTs with different initial setpoints should be filtered out of the LP
+        crac.newPstRangeAction()
+                .setId("pst1-group1")
+                .setGroupId("group1")
+                .newNetworkElement().setId("BBE2AA1  BBE3AA1  1").add()
+                .setUnit(Unit.TAP)
+                .setMinValue(-2.)
+                .setMaxValue(5.)
+                .setOperator("RTE")
+                .add();
+        crac.newPstRangeAction()
+                .setId("pst2-group1")
+                .setGroupId("group1")
+                .newNetworkElement().setId("BBE1AA1  BBE3AA1  1").add()
+                .setUnit(Unit.TAP)
+                .setMinValue(-5.)
+                .setMaxValue(10.)
+                .setOperator("RTE")
+                .add();
+
+        network = NetworkImportsUtil.import12NodesWith2PstsNetwork();
+        crac.desynchronize();
+        crac.synchronize(network);
+        initRaoData(crac.getPreventiveState());
+
+        crac.getRangeAction("pst2-group1").getExtension(RangeActionResultExtension.class).getVariant(raoData.getPreOptimVariantId()).setSetPoint(crac.getPreventiveState().getId(), 100.);
+
+        coreProblemFiller.fill(raoData, linearProblem);
+
+        // check the number of variables and constraints
+        // total number of variables 8 :
+        //      - 1 per CNEC (flow)
+        //      - 2 per range action (set-point and variation) x 1 (2 are filtered out)
+        //      - 1 per group x 0 (filtered out)
+        // total number of constraints 9 :
+        //      - 1 per CNEC (flow constraint)
+        //      - 2 per range action (absolute variation constraints) x 1
+        //      - 1 per range action in a group (group constraint) x 0
+        assertEquals(3, linearProblem.getSolver().numVariables());
+        assertEquals(3, linearProblem.getSolver().numConstraints());
     }
 }

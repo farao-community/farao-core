@@ -89,6 +89,7 @@ public class RaoParameters extends AbstractExtendable<RaoParameters> {
     public static final double DEFAULT_NEGATIVE_MARGIN_OBJECTIVE_COEFFICIENT = 1000;
     public static final double DEFAULT_PTDF_SUM_LOWER_BOUND = 0.01;
     public static final int DEFAULT_PERIMETERS_IN_PARALLEL = 1;
+    public static final boolean DEFAULT_POST_CHECK_RAO_RESULTS = false;
 
     private ObjectiveFunction objectiveFunction = DEFAULT_OBJECTIVE_FUNCTION;
     private int maxIterations = DEFAULT_MAX_ITERATIONS;
@@ -110,6 +111,15 @@ public class RaoParameters extends AbstractExtendable<RaoParameters> {
     private List<ZoneToZonePtdfDefinition> relativeMarginPtdfBoundaries = new ArrayList<>();
     private double ptdfSumLowerBound = DEFAULT_PTDF_SUM_LOWER_BOUND; // prevents relative margins from diverging to +infinity
     private int perimetersInParallel = DEFAULT_PERIMETERS_IN_PARALLEL;
+    private boolean postCheckRaoResults = DEFAULT_POST_CHECK_RAO_RESULTS; // fallback to initial situation if results are degraded (because of a curative cnec or mnec)
+
+    public boolean isPostCheckRaoResults() {
+        return postCheckRaoResults;
+    }
+
+    public void setPostCheckRaoResults(boolean postCheckRaoResults) {
+        this.postCheckRaoResults = postCheckRaoResults;
+    }
 
     public ObjectiveFunction getObjectiveFunction() {
         return objectiveFunction;
@@ -363,6 +373,7 @@ public class RaoParameters extends AbstractExtendable<RaoParameters> {
                 parameters.setRelativeMarginPtdfBoundariesFromString(config.getStringListProperty("relative-margin-ptdf-boundaries", new ArrayList<>()));
                 parameters.setPtdfSumLowerBound(config.getDoubleProperty("ptdf-sum-lower-bound", DEFAULT_PTDF_SUM_LOWER_BOUND));
                 parameters.setPerimetersInParallel(config.getIntProperty("perimeters-in-parallel", DEFAULT_PERIMETERS_IN_PARALLEL));
+                parameters.setPostCheckRaoResults(config.getBooleanProperty("post-check-rao-results", DEFAULT_POST_CHECK_RAO_RESULTS));
             });
 
         // NB: Only the default sensitivity parameters are loaded, not the fallback ones...

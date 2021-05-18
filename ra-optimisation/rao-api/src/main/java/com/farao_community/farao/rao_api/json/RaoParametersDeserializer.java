@@ -137,6 +137,10 @@ public class RaoParametersDeserializer extends StdDeserializer<RaoParameters> {
                     parser.nextToken();
                     parameters.setPerimetersInParallel(parser.getIntValue());
                     break;
+                case "post-check-rao-results":
+                    parser.nextToken();
+                    parameters.setPostCheckRaoResults(parser.getBooleanValue());
+                    break;
                 case "extensions":
                     parser.nextToken();
                     if (parameters.getExtensions().isEmpty()) {

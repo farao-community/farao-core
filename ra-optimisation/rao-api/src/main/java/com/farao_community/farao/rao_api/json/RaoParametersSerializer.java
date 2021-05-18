@@ -60,6 +60,7 @@ public class RaoParametersSerializer extends StdSerializer<RaoParameters> {
         jsonGenerator.writeEndArray();
         jsonGenerator.writeNumberField("ptdf-sum-lower-bound", parameters.getPtdfSumLowerBound());
         jsonGenerator.writeNumberField("perimeters-in-parallel", parameters.getPerimetersInParallel());
+        jsonGenerator.writeBooleanField("post-check-rao-results", parameters.isPostCheckRaoResults());
         jsonGenerator.writeFieldName("sensitivity-parameters");
         JsonSensitivityAnalysisParameters.serialize(parameters.getDefaultSensitivityAnalysisParameters(), jsonGenerator, serializerProvider);
         if (parameters.getFallbackSensitivityAnalysisParameters() != null) {

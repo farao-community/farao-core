@@ -18,6 +18,7 @@
   "relative-margin-ptdf-boundaries" : [ ],
   "ptdf-sum-lower-bound" : 0.01,
   "perimeters-in-parallel" : 1,
+  "post-check-rao-results" : false,
   "sensitivity-parameters" : {
     "version" : "1.0",
     "load-flow-parameters" : {
