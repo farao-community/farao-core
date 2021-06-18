@@ -36,7 +36,6 @@ public interface ObjectiveFunctionResult {
      */
     double getFunctionalCost();
 
-    // A voir dans l'implem si on stocke ou non
     List<FlowCnec> getMostLimitingElements(int number);
 
     /**

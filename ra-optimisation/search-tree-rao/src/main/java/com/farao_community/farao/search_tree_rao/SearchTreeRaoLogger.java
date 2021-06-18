@@ -8,12 +8,16 @@
 package com.farao_community.farao.search_tree_rao;
 
 import com.farao_community.farao.commons.Unit;
+import com.farao_community.farao.data.crac_api.Instant;
 import com.farao_community.farao.data.crac_api.cnec.FlowCnec;
 import com.farao_community.farao.data.crac_api.range_action.PstRangeAction;
 import com.farao_community.farao.data.crac_api.range_action.RangeAction;
+import com.farao_community.farao.rao_api.results.OptimizationState;
+import com.farao_community.farao.rao_api.results.RaoResult;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 import static java.lang.String.format;
 
@@ -58,6 +62,30 @@ final class SearchTreeRaoLogger {
             String margin = new DecimalFormat("#0.00").format(cnecMargin);
             String isRelativeMargin = (relativePositiveMargins && cnecMargin > 0) ? "relative " : "";
             String ptdfIfRelative = (relativePositiveMargins && cnecMargin > 0) ? format("(PTDF %f)", leaf.getPtdfZonalSum(cnec)) : "";
+            SearchTree.LOGGER.info("Limiting element #{}: element {} at state {} with a {}margin of {} {} {}",
+                    i + 1,
+                    cnecNetworkElementName,
+                    cnecStateId,
+                    isRelativeMargin,
+                    margin,
+                    unit,
+                    ptdfIfRelative);
+        }
+    }
+
+    static void logMostLimitingElementsResults(RaoResult raoResult, OptimizationState optimizationState, Unit unit, boolean relativePositiveMargins, int numberOfLoggedElements) {
+        List<FlowCnec> sortedCnecs = raoResult.getMostLimitingElements(optimizationState, numberOfLoggedElements);
+
+        for (int i = 0; i < sortedCnecs.size(); i++) {
+            FlowCnec cnec = sortedCnecs.get(i);
+            String cnecNetworkElementName = cnec.getNetworkElement().getName();
+            String cnecStateId = cnec.getState().getId();
+            OptimizationState optimizationStateCorrected = cnec.getState().getInstant().equals(Instant.PREVENTIVE) ? OptimizationState.AFTER_PRA : optimizationState;
+            double cnecMargin = relativePositiveMargins ? raoResult.getRelativeMargin(optimizationStateCorrected, cnec, unit) : raoResult.getMargin(optimizationStateCorrected, cnec, unit);
+
+            String margin = new DecimalFormat("#0.00").format(cnecMargin);
+            String isRelativeMargin = (relativePositiveMargins && cnecMargin > 0) ? "relative " : "";
+            String ptdfIfRelative = (relativePositiveMargins && cnecMargin > 0) ? format("(PTDF %f)", raoResult.getPtdfZonalSum(optimizationStateCorrected, cnec)) : "";
             SearchTree.LOGGER.info("Limiting element #{}: element {} at state {} with a {}margin of {} {} {}",
                     i + 1,
                     cnecNetworkElementName,

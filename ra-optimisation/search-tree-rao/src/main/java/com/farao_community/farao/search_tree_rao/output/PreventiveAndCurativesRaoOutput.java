@@ -8,6 +8,7 @@
 package com.farao_community.farao.search_tree_rao.output;
 
 import com.farao_community.farao.commons.FaraoException;
+import com.farao_community.farao.commons.Unit;
 import com.farao_community.farao.data.crac_api.*;
 import com.farao_community.farao.data.crac_api.cnec.FlowCnec;
 import com.farao_community.farao.data.crac_api.network_action.NetworkAction;
@@ -17,10 +18,7 @@ import com.farao_community.farao.rao_api.results.*;
 import com.farao_community.farao.search_tree_rao.PerimeterOutput;
 import com.powsybl.commons.extensions.Extension;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.farao_community.farao.rao_api.results.SensitivityStatus.FAILURE;
@@ -102,7 +100,13 @@ public class PreventiveAndCurativesRaoOutput implements RaoResult {
     @Override
     public List<FlowCnec> getMostLimitingElements(OptimizationState optimizationState, int number) {
         //TODO : store values to be able to merge easily
-        return null;
+        // temporary workaround
+        Map<FlowCnec, Double> worstMargins = new HashMap<>();
+        postPreventiveResult.getMostLimitingElements(number).forEach(cnec -> worstMargins.put(cnec, postPreventiveResult.getMargin(cnec, Unit.AMPERE)));
+        postCurativeResults.forEach((state, perimeterResult) ->
+                perimeterResult.getMostLimitingElements(number).forEach(cnec -> worstMargins.put(cnec, perimeterResult.getMargin(cnec, Unit.AMPERE))));
+        return worstMargins.keySet().stream().sorted(Comparator.comparingDouble(worstMargins::get))
+                .collect(Collectors.toList()).subList(0, Math.min(number, worstMargins.size()));
     }
 
     @Override
