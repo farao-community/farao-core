@@ -13,9 +13,7 @@ import com.farao_community.farao.data.crac_api.*;
 import com.farao_community.farao.data.crac_api.cnec.FlowCnec;
 import com.farao_community.farao.data.crac_api.cnec.Side;
 import com.farao_community.farao.data.crac_api.network_action.NetworkAction;
-import com.farao_community.farao.data.crac_api.range_action.RangeAction;
 import com.farao_community.farao.data.crac_api.usage_rule.UsageMethod;
-import com.farao_community.farao.data.crac_result_extensions.*;
 import com.farao_community.farao.data.flowbased_domain.*;
 import com.farao_community.farao.data.rao_result_api.RaoResult;
 import com.farao_community.farao.flowbased_computation.*;
@@ -86,7 +84,7 @@ public class FlowbasedComputationImpl implements FlowbasedComputationProvider {
 
         // Curative perimeter
         if (afterCraInstant != null) {
-            statesWithCras = findStatesWithCras(crac);
+            statesWithCras = findStatesWithCras(crac, raoResult);
             crac.getStatesFromInstant(afterCraInstant).forEach(state -> handleCurativeState(state, network, crac, raoResult, glsk, parameters.getSensitivityAnalysisParameters(), flowBasedComputationResult.getFlowBasedDomain()));
         } else {
             LOGGER.info("No curative computation in flowbased because 2 or less instants are defined in crac.");
@@ -145,29 +143,15 @@ public class FlowbasedComputationImpl implements FlowbasedComputationProvider {
         }
     }
 
-    private Set<State> findStatesWithCras(Crac crac) {
-        ResultVariantManager resultVariantManager = crac.getExtension(ResultVariantManager.class);
-
-        String variantPostOptimIdTmp = null;
-        if (resultVariantManager != null) {
-            if (resultVariantManager.getVariants().size() == 2) {
-                Optional<String> otherVariant = resultVariantManager.getVariants().stream().filter(variantId -> !variantId.equals(resultVariantManager.getInitialVariantId())).findFirst();
-                if (otherVariant.isPresent()) {
-                    variantPostOptimIdTmp = otherVariant.get();
-                    LOGGER.debug("Variants are correctly defined.");
-                } else {
-                    LOGGER.error("Problem with post optim variant is missing.");
-                }
-            } else {
-                throw new FaraoException(String.format("Wrong number of variants: %s.", resultVariantManager.getVariants().size()));
-            }
-            final String variantPostOptimId = variantPostOptimIdTmp;
-
-            crac.getNetworkActions().forEach(networkAction -> findStatesWithNetworkCra(networkAction, variantPostOptimId, crac.getStates()));
-            crac.getRangeActions().forEach(rangeAction -> findStatesWithRangeCra(rangeAction, variantPostOptimId, crac.getPreventiveState(), crac.getStates()));
-
-        } else {
+    private Set<State> findStatesWithCras(Crac crac, RaoResult raoResult) {
+        if (raoResult == null) {
             crac.getStates().forEach(state -> findAllStatesWithCraUsageMethod(state, crac.getNetworkActions()));
+        } else {
+            crac.getStates().forEach(state -> {
+                if (!raoResult.getOptimizedSetPointsOnState(state).isEmpty() || !raoResult.getActivatedNetworkActionsDuringState(state).isEmpty()) {
+                    statesWithCras.add(state);
+                }
+            });
         }
 
         LOGGER.debug("{} curative states with CRAs.", statesWithCras.size());
@@ -180,32 +164,6 @@ public class FlowbasedComputationImpl implements FlowbasedComputationProvider {
                 networkAction.getUsageMethod(state) != null).findAny();
             if (fittingAction.isPresent()) {
                 statesWithCras.add(state);
-            }
-        }
-    }
-
-    private void findStatesWithNetworkCra(NetworkAction networkAction, String variantPostOptimId, Set<State> states) {
-        NetworkActionResultExtension networkActionResultExtension = networkAction.getExtension(NetworkActionResultExtension.class);
-        if (networkActionResultExtension != null) {
-            NetworkActionResult networkActionResult = networkActionResultExtension.getVariant(variantPostOptimId);
-            for (State state : states) {
-                if (networkActionResult.isActivated(state.getId())) {
-                    statesWithCras.add(state);
-                }
-            }
-        }
-    }
-
-    private void findStatesWithRangeCra(RangeAction rangeAction, String variantPostOptimId, State preventiveState, Set<State> states) {
-        RangeActionResultExtension rangeActionResultExtension = rangeAction.getExtension(RangeActionResultExtension.class);
-        if (rangeActionResultExtension != null) {
-            RangeActionResult rangeActionResultPost = rangeActionResultExtension.getVariant(variantPostOptimId);
-            for (State state : states) {
-                double setPointBasecaseWithPra = rangeActionResultPost.getSetPoint(preventiveState.getId());
-                double setPointPost = rangeActionResultPost.getSetPoint(state.getId());
-                if (setPointPost != setPointBasecaseWithPra) {
-                    statesWithCras.add(state);
-                }
             }
         }
     }

@@ -18,7 +18,6 @@ import com.farao_community.farao.data.crac_api.range_action.RangeAction;
 import com.farao_community.farao.data.rao_result_api.ComputationStatus;
 import com.farao_community.farao.rao_commons.result_api.OptimizationResult;
 import com.farao_community.farao.rao_commons.result_api.PrePerimeterResult;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,20 +25,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.farao_community.farao.data.rao_result_api.OptimizationState.*;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static com.farao_community.farao.data.rao_result_api.OptimizationState.*;
 
 /**
  * @author Peter Mitri {@literal <peter.mitri at rte-france.com>}
  */
-public class SecondPreventiveAndCurativesRaoOutputTest {
+public class PreventiveAndCurativesRaoOutputTest {
     private static final double DOUBLE_TOLERANCE = 1e-3;
     PrePerimeterResult initialResult;
-    PerimeterResult post1PResult; // post 1st preventive result
-    PerimeterResult post2PResult; // post 2nd preventive result
+    PerimeterResult postPrevResult;
     PrePerimeterResult preCurativeResult;
     Map<State, OptimizationResult> postCurativeResults;
     PstRangeAction pstRangeAction = mock(PstRangeAction.class);
@@ -53,7 +52,7 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     State state2;
     State state3;
     State preventiveState;
-    SecondPreventiveAndCurativesRaoOutput output;
+    PreventiveAndCurativesRaoOutput output;
     OptimizationResult curativeResult1;
     OptimizationResult curativeResult2;
 
@@ -74,8 +73,7 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         when(state2.getInstant()).thenReturn(Instant.CURATIVE);
 
         initialResult = mock(PrePerimeterResult.class);
-        post1PResult = mock(PerimeterResult.class);
-        post2PResult = mock(PerimeterResult.class);
+        postPrevResult = mock(PerimeterResult.class);
         preCurativeResult = mock(PrePerimeterResult.class);
 
         curativeResult1 = mock(OptimizationResult.class);
@@ -109,55 +107,30 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         when(initialResult.getRelativeMargin(cnec2, Unit.MEGAWATT)).thenReturn(-1500.);
         when(initialResult.getRelativeMargin(cnec2, Unit.AMPERE)).thenReturn(-750.);
 
-        when(post1PResult.getFunctionalCost()).thenReturn(-1010.);
-        when(post1PResult.getMostLimitingElements(anyInt())).thenReturn(List.of(cnec2));
-        when(post1PResult.getVirtualCost()).thenReturn(-110.);
-        when(post1PResult.getVirtualCost("mnec")).thenReturn(-30.);
-        when(post1PResult.getVirtualCost("lf")).thenReturn(-90.);
-        when(post1PResult.getCostlyElements(eq("mnec"), anyInt())).thenReturn(List.of(cnec1));
-        when(post1PResult.getCostlyElements(eq("lf"), anyInt())).thenReturn(List.of(cnec2));
-        when(post1PResult.isActivated(networkAction)).thenReturn(false);
-        when(post1PResult.getActivatedNetworkActions()).thenReturn(Set.of());
-        when(post1PResult.getActivatedRangeActions()).thenReturn(Set.of());
-        when(post1PResult.getOptimizedSetPoint(pstRangeAction)).thenReturn(18.9);
-        when(post1PResult.getOptimizedSetPoint(rangeAction)).thenReturn(15.6);
-        when(post1PResult.getOptimizedTap(pstRangeAction)).thenReturn(12);
-        when(post1PResult.getRangeActions()).thenReturn(Set.of(rangeAction, pstRangeAction));
-        when(post1PResult.getOptimizedTaps()).thenReturn(Map.of(pstRangeAction, 12));
-        when(post1PResult.getOptimizedSetPoints()).thenReturn(Map.of(pstRangeAction, 18.9, rangeAction, 15.6));
-        when(post1PResult.getMargin(cnec2, Unit.MEGAWATT)).thenReturn(1010.);
-        when(post1PResult.getMargin(cnec2, Unit.AMPERE)).thenReturn(510.);
-        when(post1PResult.getRelativeMargin(cnec2, Unit.MEGAWATT)).thenReturn(2010.);
-        when(post1PResult.getRelativeMargin(cnec2, Unit.AMPERE)).thenReturn(1010.);
-        when(post1PResult.getMargin(cnec1, Unit.MEGAWATT)).thenReturn(510.);
-        when(post1PResult.getMargin(cnec1, Unit.AMPERE)).thenReturn(260.);
-        when(post1PResult.getRelativeMargin(cnec1, Unit.MEGAWATT)).thenReturn(1510.);
-        when(post1PResult.getRelativeMargin(cnec1, Unit.AMPERE)).thenReturn(760.);
-
-        when(post2PResult.getFunctionalCost()).thenReturn(-1020.);
-        when(post2PResult.getMostLimitingElements(anyInt())).thenReturn(List.of(cnec2));
-        when(post2PResult.getVirtualCost()).thenReturn(-120.);
-        when(post2PResult.getVirtualCost("mnec")).thenReturn(-40.);
-        when(post2PResult.getVirtualCost("lf")).thenReturn(-100.);
-        when(post2PResult.getCostlyElements(eq("mnec"), anyInt())).thenReturn(List.of(cnec1));
-        when(post2PResult.getCostlyElements(eq("lf"), anyInt())).thenReturn(List.of(cnec2));
-        when(post2PResult.isActivated(networkAction)).thenReturn(true);
-        when(post2PResult.getActivatedNetworkActions()).thenReturn(Set.of(networkAction));
-        when(post2PResult.getActivatedRangeActions()).thenReturn(Set.of(rangeAction));
-        when(post2PResult.getOptimizedSetPoint(pstRangeAction)).thenReturn(28.9);
-        when(post2PResult.getOptimizedSetPoint(rangeAction)).thenReturn(25.6);
-        when(post2PResult.getOptimizedTap(pstRangeAction)).thenReturn(22);
-        when(post2PResult.getRangeActions()).thenReturn(Set.of(rangeAction, pstRangeAction));
-        when(post2PResult.getOptimizedTaps()).thenReturn(Map.of(pstRangeAction, 22));
-        when(post2PResult.getOptimizedSetPoints()).thenReturn(Map.of(pstRangeAction, 28.9, rangeAction, 25.6));
-        when(post2PResult.getMargin(cnec2, Unit.MEGAWATT)).thenReturn(1020.);
-        when(post2PResult.getMargin(cnec2, Unit.AMPERE)).thenReturn(520.);
-        when(post2PResult.getRelativeMargin(cnec2, Unit.MEGAWATT)).thenReturn(2020.);
-        when(post2PResult.getRelativeMargin(cnec2, Unit.AMPERE)).thenReturn(1020.);
-        when(post2PResult.getMargin(cnec1, Unit.MEGAWATT)).thenReturn(520.);
-        when(post2PResult.getMargin(cnec1, Unit.AMPERE)).thenReturn(270.);
-        when(post2PResult.getRelativeMargin(cnec1, Unit.MEGAWATT)).thenReturn(1520.);
-        when(post2PResult.getRelativeMargin(cnec1, Unit.AMPERE)).thenReturn(770.);
+        when(postPrevResult.getFunctionalCost()).thenReturn(-1020.);
+        when(postPrevResult.getMostLimitingElements(anyInt())).thenReturn(List.of(cnec2));
+        when(postPrevResult.getVirtualCost()).thenReturn(-120.);
+        when(postPrevResult.getVirtualCost("mnec")).thenReturn(-40.);
+        when(postPrevResult.getVirtualCost("lf")).thenReturn(-100.);
+        when(postPrevResult.getCostlyElements(eq("mnec"), anyInt())).thenReturn(List.of(cnec1));
+        when(postPrevResult.getCostlyElements(eq("lf"), anyInt())).thenReturn(List.of(cnec2));
+        when(postPrevResult.isActivated(networkAction)).thenReturn(true);
+        when(postPrevResult.getActivatedNetworkActions()).thenReturn(Set.of(networkAction));
+        when(postPrevResult.getActivatedRangeActions()).thenReturn(Set.of(rangeAction));
+        when(postPrevResult.getOptimizedSetPoint(pstRangeAction)).thenReturn(28.9);
+        when(postPrevResult.getOptimizedSetPoint(rangeAction)).thenReturn(25.6);
+        when(postPrevResult.getOptimizedTap(pstRangeAction)).thenReturn(22);
+        when(postPrevResult.getRangeActions()).thenReturn(Set.of(rangeAction, pstRangeAction));
+        when(postPrevResult.getOptimizedTaps()).thenReturn(Map.of(pstRangeAction, 22));
+        when(postPrevResult.getOptimizedSetPoints()).thenReturn(Map.of(pstRangeAction, 28.9, rangeAction, 25.6));
+        when(postPrevResult.getMargin(cnec2, Unit.MEGAWATT)).thenReturn(1020.);
+        when(postPrevResult.getMargin(cnec2, Unit.AMPERE)).thenReturn(520.);
+        when(postPrevResult.getRelativeMargin(cnec2, Unit.MEGAWATT)).thenReturn(2020.);
+        when(postPrevResult.getRelativeMargin(cnec2, Unit.AMPERE)).thenReturn(1020.);
+        when(postPrevResult.getMargin(cnec1, Unit.MEGAWATT)).thenReturn(520.);
+        when(postPrevResult.getMargin(cnec1, Unit.AMPERE)).thenReturn(270.);
+        when(postPrevResult.getRelativeMargin(cnec1, Unit.MEGAWATT)).thenReturn(1520.);
+        when(postPrevResult.getRelativeMargin(cnec1, Unit.AMPERE)).thenReturn(770.);
 
         when(curativeResult1.getFunctionalCost()).thenReturn(-1030.);
         when(curativeResult1.getMostLimitingElements(anyInt())).thenReturn(List.of(cnec2));
@@ -229,18 +202,15 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         when(preCurativeResult.getRelativeMargin(cnec1, Unit.MEGAWATT)).thenReturn(1550.);
         when(preCurativeResult.getRelativeMargin(cnec1, Unit.AMPERE)).thenReturn(800.);
 
-        output = new SecondPreventiveAndCurativesRaoOutput(initialResult,
-                post1PResult,
-                post2PResult,
+        output = new PreventiveAndCurativesRaoOutput(initialResult,
+            postPrevResult,
                 preCurativeResult,
-                Map.of(state1, curativeResult1, state2, curativeResult2),
-                Set.of());
+                Map.of(state1, curativeResult1, state2, curativeResult2));
     }
 
     @Test
     public void testGetComputationStatus() {
         when(initialResult.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
-        when(post2PResult.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
         when(curativeResult1.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
         when(curativeResult2.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
         assertEquals(ComputationStatus.DEFAULT, output.getComputationStatus());
@@ -249,40 +219,36 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         assertEquals(ComputationStatus.FAILURE, output.getComputationStatus());
 
         when(initialResult.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
-        when(post2PResult.getSensitivityStatus()).thenReturn(ComputationStatus.FAILURE);
+        when(postPrevResult.getSensitivityStatus()).thenReturn(ComputationStatus.FAILURE);
         assertEquals(ComputationStatus.FAILURE, output.getComputationStatus());
 
-        when(post2PResult.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
+        when(postPrevResult.getSensitivityStatus()).thenReturn(ComputationStatus.DEFAULT);
         when(curativeResult2.getSensitivityStatus()).thenReturn(ComputationStatus.FAILURE);
         assertEquals(ComputationStatus.FAILURE, output.getComputationStatus());
     }
 
     @Test
-    public void testUnimplementedGetResult() {
-        assertThrows(NotImplementedException.class, () -> output.getPerimeterResult(INITIAL, state1));
-        assertThrows(NotImplementedException.class, () -> output.getPostPreventivePerimeterResult());
-        assertThrows(NotImplementedException.class, () -> output.getInitialResult());
-    }
-
-    @Test
     public void testGetFunctionalCost() {
         assertEquals(1000., output.getFunctionalCost(INITIAL), DOUBLE_TOLERANCE);
-        assertEquals(-1050., output.getFunctionalCost(AFTER_PRA), DOUBLE_TOLERANCE);
+        assertEquals(-1020., output.getFunctionalCost(AFTER_PRA), DOUBLE_TOLERANCE);
         assertEquals(-1020., output.getFunctionalCost(AFTER_CRA), DOUBLE_TOLERANCE);
+
+        when(postPrevResult.getFunctionalCost()).thenReturn(-2020.);
+        assertEquals(-1030., output.getFunctionalCost(AFTER_CRA), DOUBLE_TOLERANCE);
     }
 
     @Test
     public void testGetMostLimitingElements() {
-        assertEquals(List.of(cnec1), output.getMostLimitingElements(INITIAL, 5));
-        assertEquals(List.of(cnec3), output.getMostLimitingElements(AFTER_PRA, 15));
-        assertEquals(List.of(cnec2), output.getMostLimitingElements(AFTER_CRA, 445));
+        assertNull(output.getMostLimitingElements(INITIAL, 5));
+        assertNull(output.getMostLimitingElements(AFTER_PRA, 15));
+        assertNull(output.getMostLimitingElements(AFTER_CRA, 445));
     }
 
     @Test
     public void testGetVirtualCost() {
         assertEquals(100., output.getVirtualCost(INITIAL), DOUBLE_TOLERANCE);
-        assertEquals(-150., output.getVirtualCost(AFTER_PRA), DOUBLE_TOLERANCE);
-        assertEquals(-120., output.getVirtualCost(AFTER_CRA), DOUBLE_TOLERANCE);
+        assertEquals(-120., output.getVirtualCost(AFTER_PRA), DOUBLE_TOLERANCE);
+        assertEquals(-270., output.getVirtualCost(AFTER_CRA), DOUBLE_TOLERANCE);
     }
 
     @Test
@@ -294,22 +260,22 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     public void testGetVirtualCostByName() {
         assertEquals(20., output.getVirtualCost(INITIAL, "mnec"), DOUBLE_TOLERANCE);
         assertEquals(80., output.getVirtualCost(INITIAL, "lf"), DOUBLE_TOLERANCE);
-        assertEquals(-70., output.getVirtualCost(AFTER_PRA, "mnec"), DOUBLE_TOLERANCE);
-        assertEquals(-130., output.getVirtualCost(AFTER_PRA, "lf"), DOUBLE_TOLERANCE);
-        assertEquals(-40., output.getVirtualCost(AFTER_CRA, "mnec"), DOUBLE_TOLERANCE);
-        assertEquals(-100., output.getVirtualCost(AFTER_CRA, "lf"), DOUBLE_TOLERANCE);
+        assertEquals(-40., output.getVirtualCost(AFTER_PRA, "mnec"), DOUBLE_TOLERANCE);
+        assertEquals(-100., output.getVirtualCost(AFTER_PRA, "lf"), DOUBLE_TOLERANCE);
+        assertEquals(-110., output.getVirtualCost(AFTER_CRA, "mnec"), DOUBLE_TOLERANCE);
+        assertEquals(-230., output.getVirtualCost(AFTER_CRA, "lf"), DOUBLE_TOLERANCE);
     }
 
     @Test
     public void testGetCostlyElements() {
-        assertEquals(List.of(cnec2), output.getCostlyElements(INITIAL, "mnec", 5));
-        assertEquals(List.of(cnec1), output.getCostlyElements(INITIAL, "lf", 15));
+        assertNull(output.getCostlyElements(INITIAL, "mnec", 5));
+        assertNull(output.getCostlyElements(INITIAL, "lf", 15));
 
-        assertEquals(List.of(cnec3, cnec2), output.getCostlyElements(AFTER_PRA, "mnec", 5));
-        assertEquals(List.of(cnec1, cnec4), output.getCostlyElements(AFTER_PRA, "lf", 15));
+        assertNull(output.getCostlyElements(AFTER_PRA, "mnec", 5));
+        assertNull(output.getCostlyElements(AFTER_PRA, "lf", 15));
 
-        assertEquals(List.of(cnec1), output.getCostlyElements(AFTER_CRA, "mnec", 5));
-        assertEquals(List.of(cnec2), output.getCostlyElements(AFTER_CRA, "lf", 15));
+        assertNull(output.getCostlyElements(AFTER_CRA, "mnec", 5));
+        assertNull(output.getCostlyElements(AFTER_CRA, "lf", 15));
     }
 
     @Test
@@ -317,33 +283,12 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         assertFalse(output.wasActivatedBeforeState(preventiveState, networkAction));
         assertTrue(output.wasActivatedBeforeState(state1, networkAction));
         assertTrue(output.wasActivatedBeforeState(state2, networkAction));
-
-        output = new SecondPreventiveAndCurativesRaoOutput(initialResult,
-                post1PResult,
-                post2PResult,
-                preCurativeResult,
-                Map.of(state1, curativeResult1, state2, curativeResult2),
-                Set.of(networkAction));
-        assertFalse(output.wasActivatedBeforeState(state1, networkAction));
-        assertFalse(output.wasActivatedBeforeState(state2, networkAction));
     }
 
     @Test
     public void testIsNetworkActionActivatedDuringState() {
         assertTrue(output.isActivatedDuringState(preventiveState, networkAction));
         assertFalse(output.isActivatedDuringState(state1, networkAction));
-        assertFalse(output.isActivatedDuringState(state2, networkAction));
-        assertFalse(output.isActivatedDuringState(state3, networkAction));
-
-        when(curativeResult1.getActivatedNetworkActions()).thenReturn(Set.of(networkAction));
-        output = new SecondPreventiveAndCurativesRaoOutput(initialResult,
-                post1PResult,
-                post2PResult,
-                preCurativeResult,
-                Map.of(state1, curativeResult1, state2, curativeResult2),
-                Set.of(networkAction));
-        assertFalse(output.isActivatedDuringState(preventiveState, networkAction));
-        assertTrue(output.isActivatedDuringState(state1, networkAction));
         assertFalse(output.isActivatedDuringState(state2, networkAction));
         assertFalse(output.isActivatedDuringState(state3, networkAction));
     }
@@ -356,18 +301,12 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         assertEquals(Set.of(), output.getActivatedNetworkActionsDuringState(state2));
 
         when(curativeResult2.getActivatedNetworkActions()).thenReturn(Set.of(networkAction));
-        output = new SecondPreventiveAndCurativesRaoOutput(initialResult,
-                post1PResult,
-                post2PResult,
-                preCurativeResult,
-                Map.of(state1, curativeResult1, state2, curativeResult2),
-                Set.of(networkAction));
         assertEquals(Set.of(networkAction), output.getActivatedNetworkActionsDuringState(preventiveState));
         assertEquals(Set.of(), output.getActivatedNetworkActionsDuringState(state3));
         assertEquals(Set.of(), output.getActivatedNetworkActionsDuringState(state1));
         assertEquals(Set.of(networkAction), output.getActivatedNetworkActionsDuringState(state2));
 
-        when(post2PResult.getActivatedNetworkActions()).thenReturn(Set.of());
+        when(postPrevResult.getActivatedNetworkActions()).thenReturn(Set.of());
         assertEquals(Set.of(), output.getActivatedNetworkActionsDuringState(preventiveState));
         assertEquals(Set.of(), output.getActivatedNetworkActionsDuringState(state3));
     }
@@ -379,19 +318,8 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         assertTrue(output.isActivatedDuringState(state2, rangeAction));
         assertFalse(output.isActivatedDuringState(state3, rangeAction));
 
-        when(curativeResult2.getOptimizedSetPoint(rangeAction)).thenReturn(15.6);
+        when(curativeResult2.getOptimizedSetPoint(rangeAction)).thenReturn(55.6);
         assertTrue(output.isActivatedDuringState(preventiveState, rangeAction));
-        assertTrue(output.isActivatedDuringState(state1, rangeAction));
-        assertFalse(output.isActivatedDuringState(state2, rangeAction));
-        assertFalse(output.isActivatedDuringState(state3, rangeAction));
-
-        output = new SecondPreventiveAndCurativesRaoOutput(initialResult,
-                post1PResult,
-                post2PResult,
-                preCurativeResult,
-                Map.of(state1, curativeResult1, state2, curativeResult2),
-                Set.of(rangeAction));
-        assertFalse(output.isActivatedDuringState(preventiveState, rangeAction));
         assertTrue(output.isActivatedDuringState(state1, rangeAction));
         assertFalse(output.isActivatedDuringState(state2, rangeAction));
         assertFalse(output.isActivatedDuringState(state3, rangeAction));
@@ -407,7 +335,7 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
 
     @Test
     public void testGetOptimizedTapOnState() {
-        when(post2PResult.getOptimizedTap(pstRangeAction)).thenReturn(202);
+        when(postPrevResult.getOptimizedTap(pstRangeAction)).thenReturn(202);
         assertEquals(202, output.getOptimizedTapOnState(preventiveState, pstRangeAction));
         assertEquals(22, output.getOptimizedTapOnState(state1, pstRangeAction));
         assertEquals(42, output.getOptimizedTapOnState(state2, pstRangeAction));
@@ -424,7 +352,7 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
 
     @Test
     public void testGetOptimizedSetPointOnState() {
-        when(post2PResult.getOptimizedSetPoint(pstRangeAction)).thenReturn(567.);
+        when(postPrevResult.getOptimizedSetPoint(pstRangeAction)).thenReturn(567.);
         assertEquals(567, output.getOptimizedSetPointOnState(preventiveState, pstRangeAction), DOUBLE_TOLERANCE);
         assertEquals(28.9, output.getOptimizedSetPointOnState(state1, pstRangeAction), DOUBLE_TOLERANCE);
         assertEquals(48.9, output.getOptimizedSetPointOnState(state2, pstRangeAction), DOUBLE_TOLERANCE);
@@ -438,21 +366,12 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         assertEquals(Set.of(pstRangeAction, rangeAction), output.getActivatedRangeActionsDuringState(state2));
         assertEquals(Set.of(), output.getActivatedRangeActionsDuringState(state3));
 
-        when(post2PResult.getActivatedRangeActions()).thenReturn(Set.of());
-        when(post1PResult.getActivatedRangeActions()).thenReturn(Set.of(pstRangeAction));
-        output = new SecondPreventiveAndCurativesRaoOutput(initialResult,
-                post1PResult,
-                post2PResult,
-                preCurativeResult,
-                Map.of(state1, curativeResult1, state2, curativeResult2),
-                Set.of(pstRangeAction));
+        when(postPrevResult.getActivatedRangeActions()).thenReturn(Set.of(pstRangeAction));
         assertEquals(Set.of(pstRangeAction), output.getActivatedRangeActionsDuringState(preventiveState));
     }
 
     @Test
     public void testGetOptimizedTapsOnState() {
-        when(post2PResult.getOptimizedTaps()).thenReturn(Map.of(pstRangeAction, 222));
-
         when(curativeResult1.getOptimizedTaps()).thenReturn(Map.of(pstRangeAction, 333));
         when(curativeResult1.getOptimizedTap(pstRangeAction)).thenReturn(333);
         // with next line, pstRangeAction should be detected as activated in state1
@@ -463,15 +382,15 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         // with next line, pstRangeAction should not be detected as activated in state2
         when(curativeResult2.getOptimizedSetPoint(pstRangeAction)).thenReturn(18.9);
 
-        assertEquals(Map.of(pstRangeAction, 222), output.getOptimizedTapsOnState(preventiveState));
+        assertEquals(Map.of(pstRangeAction, 22), output.getOptimizedTapsOnState(preventiveState));
         assertEquals(Map.of(pstRangeAction, 333), output.getOptimizedTapsOnState(state1));
-        assertEquals(Map.of(pstRangeAction, 22), output.getOptimizedTapsOnState(state2));
-        assertEquals(Map.of(pstRangeAction, 222), output.getOptimizedTapsOnState(state3));
+        assertEquals(Map.of(pstRangeAction, 444), output.getOptimizedTapsOnState(state2));
+        assertEquals(Map.of(pstRangeAction, 22), output.getOptimizedTapsOnState(state3));
     }
 
     @Test
     public void testGetOptimizedSetPointsOnState() {
-        when(post2PResult.getOptimizedSetPoints()).thenReturn(Map.of(pstRangeAction, 222., rangeAction, 111.));
+        when(postPrevResult.getOptimizedSetPoints()).thenReturn(Map.of(pstRangeAction, 222., rangeAction, 111.));
 
         when(curativeResult1.getOptimizedSetPoints()).thenReturn(Map.of(pstRangeAction, 333.));
         // with next line, pstRangeAction should be detected as activated in state1
@@ -482,16 +401,17 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
         when(curativeResult2.getOptimizedSetPoint(pstRangeAction)).thenReturn(18.9);
 
         assertEquals(Map.of(pstRangeAction, 222., rangeAction, 111.), output.getOptimizedSetPointsOnState(preventiveState));
-        assertEquals(Map.of(pstRangeAction, 333., rangeAction, 25.6), output.getOptimizedSetPointsOnState(state1));
-        assertEquals(Map.of(pstRangeAction, 28.9, rangeAction, 25.6), output.getOptimizedSetPointsOnState(state2));
+        assertEquals(Map.of(pstRangeAction, 333.), output.getOptimizedSetPointsOnState(state1));
+        assertEquals(Map.of(pstRangeAction, 444.), output.getOptimizedSetPointsOnState(state2));
         assertEquals(Map.of(pstRangeAction, 222., rangeAction, 111.), output.getOptimizedSetPointsOnState(state3));
     }
 
     @Test
     public void testGetFlow() {
         when(initialResult.getFlow(cnec1, Unit.MEGAWATT)).thenReturn(10.);
-        when(preCurativeResult.getFlow(cnec2, Unit.AMPERE)).thenReturn(20.);
-        when(post2PResult.getFlow(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(postPrevResult.getFlow(cnec2, Unit.AMPERE)).thenReturn(20.);
+        when(postPrevResult.getFlow(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(cnec3.getState()).thenReturn(state3);
         assertEquals(10., output.getFlow(INITIAL, cnec1, Unit.MEGAWATT), DOUBLE_TOLERANCE);
         assertEquals(20., output.getFlow(AFTER_PRA, cnec2, Unit.AMPERE), DOUBLE_TOLERANCE);
         assertEquals(30., output.getFlow(AFTER_CRA, cnec3, Unit.MEGAWATT), DOUBLE_TOLERANCE);
@@ -500,8 +420,9 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     @Test
     public void testGetMargin() {
         when(initialResult.getMargin(cnec1, Unit.MEGAWATT)).thenReturn(10.);
-        when(preCurativeResult.getMargin(cnec2, Unit.AMPERE)).thenReturn(20.);
-        when(post2PResult.getMargin(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(postPrevResult.getMargin(cnec2, Unit.AMPERE)).thenReturn(20.);
+        when(postPrevResult.getMargin(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(cnec3.getState()).thenReturn(state3);
         assertEquals(10., output.getMargin(INITIAL, cnec1, Unit.MEGAWATT), DOUBLE_TOLERANCE);
         assertEquals(20., output.getMargin(AFTER_PRA, cnec2, Unit.AMPERE), DOUBLE_TOLERANCE);
         assertEquals(30., output.getMargin(AFTER_CRA, cnec3, Unit.MEGAWATT), DOUBLE_TOLERANCE);
@@ -510,8 +431,9 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     @Test
     public void testGetRelativeMargin() {
         when(initialResult.getRelativeMargin(cnec1, Unit.MEGAWATT)).thenReturn(10.);
-        when(preCurativeResult.getRelativeMargin(cnec2, Unit.AMPERE)).thenReturn(20.);
-        when(post2PResult.getRelativeMargin(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(postPrevResult.getRelativeMargin(cnec2, Unit.AMPERE)).thenReturn(20.);
+        when(postPrevResult.getRelativeMargin(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(cnec3.getState()).thenReturn(state3);
         assertEquals(10., output.getRelativeMargin(INITIAL, cnec1, Unit.MEGAWATT), DOUBLE_TOLERANCE);
         assertEquals(20., output.getRelativeMargin(AFTER_PRA, cnec2, Unit.AMPERE), DOUBLE_TOLERANCE);
         assertEquals(30., output.getRelativeMargin(AFTER_CRA, cnec3, Unit.MEGAWATT), DOUBLE_TOLERANCE);
@@ -520,8 +442,9 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     @Test
     public void testGetCommercialFlow() {
         when(initialResult.getCommercialFlow(cnec1, Unit.MEGAWATT)).thenReturn(10.);
-        when(preCurativeResult.getCommercialFlow(cnec2, Unit.AMPERE)).thenReturn(20.);
-        when(post2PResult.getCommercialFlow(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(postPrevResult.getCommercialFlow(cnec2, Unit.AMPERE)).thenReturn(20.);
+        when(curativeResult1.getCommercialFlow(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(cnec3.getState()).thenReturn(state1);
         assertEquals(10., output.getCommercialFlow(INITIAL, cnec1, Unit.MEGAWATT), DOUBLE_TOLERANCE);
         assertEquals(20., output.getCommercialFlow(AFTER_PRA, cnec2, Unit.AMPERE), DOUBLE_TOLERANCE);
         assertEquals(30., output.getCommercialFlow(AFTER_CRA, cnec3, Unit.MEGAWATT), DOUBLE_TOLERANCE);
@@ -530,8 +453,10 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     @Test
     public void testGetLoopFlow() {
         when(initialResult.getLoopFlow(cnec1, Unit.MEGAWATT)).thenReturn(10.);
-        when(preCurativeResult.getLoopFlow(cnec2, Unit.AMPERE)).thenReturn(20.);
-        when(post2PResult.getLoopFlow(cnec3, Unit.MEGAWATT)).thenReturn(30.);
+        when(postPrevResult.getLoopFlow(cnec2, Unit.AMPERE)).thenReturn(20.);
+        when(curativeResult2.getFlow(cnec3, Unit.MEGAWATT)).thenReturn(90.);
+        when(curativeResult2.getCommercialFlow(cnec3, Unit.MEGAWATT)).thenReturn(60.);
+        when(cnec3.getState()).thenReturn(state2);
         assertEquals(10., output.getLoopFlow(INITIAL, cnec1, Unit.MEGAWATT), DOUBLE_TOLERANCE);
         assertEquals(20., output.getLoopFlow(AFTER_PRA, cnec2, Unit.AMPERE), DOUBLE_TOLERANCE);
         assertEquals(30., output.getLoopFlow(AFTER_CRA, cnec3, Unit.MEGAWATT), DOUBLE_TOLERANCE);
@@ -540,8 +465,9 @@ public class SecondPreventiveAndCurativesRaoOutputTest {
     @Test
     public void testGetPtdfZonalSum() {
         when(initialResult.getPtdfZonalSum(cnec1)).thenReturn(10.);
-        when(preCurativeResult.getPtdfZonalSum(cnec2)).thenReturn(20.);
-        when(post2PResult.getPtdfZonalSum(cnec3)).thenReturn(30.);
+        when(postPrevResult.getPtdfZonalSum(cnec2)).thenReturn(20.);
+        when(curativeResult2.getPtdfZonalSum(cnec3)).thenReturn(30.);
+        when(cnec3.getState()).thenReturn(state2);
         assertEquals(10., output.getPtdfZonalSum(INITIAL, cnec1), DOUBLE_TOLERANCE);
         assertEquals(20., output.getPtdfZonalSum(AFTER_PRA, cnec2), DOUBLE_TOLERANCE);
         assertEquals(30., output.getPtdfZonalSum(AFTER_CRA, cnec3), DOUBLE_TOLERANCE);

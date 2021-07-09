@@ -19,10 +19,7 @@ import com.farao_community.farao.rao_commons.result_api.OptimizationResult;
 import com.farao_community.farao.rao_commons.result_api.PrePerimeterResult;
 import com.farao_community.farao.search_tree_rao.PerimeterOutput;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.farao_community.farao.data.rao_result_api.ComputationStatus.FAILURE;
@@ -54,6 +51,7 @@ public class PreventiveAndCurativesRaoOutput implements SearchTreeRaoResult {
     }
 
     public PerimeterResult getPerimeterResult(OptimizationState optimizationState, State state) {
+
         if (optimizationState == OptimizationState.INITIAL) {
             if (state.getInstant() == Instant.PREVENTIVE) {
                 return null;
@@ -207,14 +205,16 @@ public class PreventiveAndCurativesRaoOutput implements SearchTreeRaoResult {
     public int getPreOptimizationTapOnState(State state, PstRangeAction pstRangeAction) {
         if (state.getInstant() == Instant.PREVENTIVE) {
             return initialResult.getOptimizedTap(pstRangeAction);
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return postPreventiveResult.getOptimizedTap(pstRangeAction);
+        } else {
+            throw new FaraoException(String.format("State %s was not optimized and does not have pre-optim values", state.getId()));
         }
     }
 
     @Override
     public int getOptimizedTapOnState(State state, PstRangeAction pstRangeAction) {
-        if (state.getInstant() == Instant.PREVENTIVE) {
+        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
             return postPreventiveResult.getOptimizedTap(pstRangeAction);
         } else {
             return postCurativeResults.get(state).getOptimizedTap(pstRangeAction);
@@ -225,14 +225,16 @@ public class PreventiveAndCurativesRaoOutput implements SearchTreeRaoResult {
     public double getPreOptimizationSetPointOnState(State state, RangeAction rangeAction) {
         if (state.getInstant() == Instant.PREVENTIVE) {
             return initialResult.getOptimizedSetPoint(rangeAction);
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return postPreventiveResult.getOptimizedSetPoint(rangeAction);
+        } else {
+            throw new FaraoException(String.format("State %s was not optimized and does not have pre-optim values", state.getId()));
         }
     }
 
     @Override
     public double getOptimizedSetPointOnState(State state, RangeAction rangeAction) {
-        if (state.getInstant() == Instant.PREVENTIVE) {
+        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
             return postPreventiveResult.getOptimizedSetPoint(rangeAction);
         } else {
             return postCurativeResults.get(state).getOptimizedSetPoint(rangeAction);
@@ -252,7 +254,7 @@ public class PreventiveAndCurativesRaoOutput implements SearchTreeRaoResult {
 
     @Override
     public Map<PstRangeAction, Integer> getOptimizedTapsOnState(State state) {
-        if (state.getInstant() == Instant.PREVENTIVE) {
+        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
             return postPreventiveResult.getOptimizedTaps();
         } else {
             return postCurativeResults.get(state).getOptimizedTaps();
@@ -261,7 +263,7 @@ public class PreventiveAndCurativesRaoOutput implements SearchTreeRaoResult {
 
     @Override
     public Map<RangeAction, Double> getOptimizedSetPointsOnState(State state) {
-        if (state.getInstant() == Instant.PREVENTIVE) {
+        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
             return postPreventiveResult.getOptimizedSetPoints();
         } else {
             return postCurativeResults.get(state).getOptimizedSetPoints();

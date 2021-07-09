@@ -296,4 +296,15 @@ public class RangeActionFilterTest {
         filter.filterUnavailableRangeActions();
     }
 
+    @Test
+    public void testDontFailIfAllRangeActionsUsed() {
+        Mockito.when(treeParameters.getMaxRa()).thenReturn(3);
+        PstRangeAction pst1 = addPstRangeAction("op", 0, 3, 0);
+        PstRangeAction pst2 = addPstRangeAction("op", 0, 3, 0);
+        when(leaf.getRangeActions()).thenReturn(Set.of(pst1, pst2));
+        rangeActionFilter = new RangeActionFilter(leaf, availableRangeActions, Mockito.mock(State.class), treeParameters, prePerimeterSetPoints, false);
+        rangeActionFilter.filterMaxRas();
+        assertEquals(availableRangeActions, rangeActionFilter.getRangeActionsToOptimize());
+    }
+
 }

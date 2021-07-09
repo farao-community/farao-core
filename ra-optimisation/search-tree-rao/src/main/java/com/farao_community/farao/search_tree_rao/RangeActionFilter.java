@@ -145,6 +145,7 @@ class RangeActionFilter {
             return rangeActionsToFilter;
         } else {
             rangeActionsToRemove.removeAll(appliedRangeActions);
+            updatedNumberOfRangeActionsToKeep = Math.min(updatedNumberOfRangeActionsToKeep, rangeActionsToRemove.size());
             List<RangeAction> rangeActionsSortedBySensitivity = rangeActionsToRemove.stream()
                 .sorted((ra1, ra2) -> comparePrioritiesAndSensitivities(ra1, ra2, leaf.getMostLimitingElements(1).get(0), leaf))
                 .collect(Collectors.toList());

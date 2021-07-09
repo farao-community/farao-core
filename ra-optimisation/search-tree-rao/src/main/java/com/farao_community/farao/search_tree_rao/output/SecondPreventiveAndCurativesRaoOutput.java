@@ -184,32 +184,36 @@ public class SecondPreventiveAndCurativesRaoOutput implements SearchTreeRaoResul
 
     @Override
     public boolean isActivatedDuringState(State state, NetworkAction networkAction) {
-        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
+        if (state.getInstant() == Instant.PREVENTIVE) {
             if (remedialActionsExcludedFromSecondPreventive.contains(networkAction)) {
                 return postFirstPreventiveResult.getActivatedNetworkActions().contains(networkAction);
             } else {
                 return postSecondPreventiveResult.getActivatedNetworkActions().contains(networkAction);
             }
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return postCurativeResults.get(state).getActivatedNetworkActions().contains(networkAction);
+        } else {
+            return false;
         }
     }
 
     @Override
     public Set<NetworkAction> getActivatedNetworkActionsDuringState(State state) {
-        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
+        if (state.getInstant() == Instant.PREVENTIVE) {
             Set<NetworkAction> activatedNetworkActions = postFirstPreventiveResult.getActivatedNetworkActions().stream()
                     .filter(networkAction -> remedialActionsExcludedFromSecondPreventive.contains(networkAction)).collect(Collectors.toSet());
             activatedNetworkActions.addAll(postSecondPreventiveResult.getActivatedNetworkActions());
             return activatedNetworkActions;
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return postCurativeResults.get(state).getActivatedNetworkActions();
+        } else {
+            return new HashSet<>();
         }
     }
 
     @Override
     public boolean isActivatedDuringState(State state, RangeAction rangeAction) {
-        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
+        if (state.getInstant() == Instant.PREVENTIVE) {
             if (remedialActionsExcludedFromSecondPreventive.contains(rangeAction)) {
                 return postFirstPreventiveResult.getActivatedRangeActions().contains(rangeAction);
             } else {
@@ -222,10 +226,12 @@ public class SecondPreventiveAndCurativesRaoOutput implements SearchTreeRaoResul
 
     @Override
     public int getPreOptimizationTapOnState(State state, PstRangeAction pstRangeAction) {
-        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
+        if (state.getInstant() == Instant.PREVENTIVE) {
             return initialResult.getOptimizedTap(pstRangeAction);
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return postSecondPreventiveResult.getOptimizedTap(pstRangeAction);
+        } else {
+            throw new FaraoException(String.format("State %s was not optimized and does not have pre-optim values", state.getId()));
         }
     }
 
@@ -242,10 +248,12 @@ public class SecondPreventiveAndCurativesRaoOutput implements SearchTreeRaoResul
 
     @Override
     public double getPreOptimizationSetPointOnState(State state, RangeAction rangeAction) {
-        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
+        if (state.getInstant() == Instant.PREVENTIVE) {
             return initialResult.getOptimizedSetPoint(rangeAction);
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return postSecondPreventiveResult.getOptimizedSetPoint(rangeAction);
+        } else {
+            throw new FaraoException(String.format("State %s was not optimized and does not have pre-optim values", state.getId()));
         }
     }
 
@@ -262,13 +270,15 @@ public class SecondPreventiveAndCurativesRaoOutput implements SearchTreeRaoResul
 
     @Override
     public Set<RangeAction> getActivatedRangeActionsDuringState(State state) {
-        if (state.getInstant() == Instant.PREVENTIVE || !postCurativeResults.containsKey(state)) {
+        if (state.getInstant() == Instant.PREVENTIVE) {
             Set<RangeAction> activatedRangeActions = postFirstPreventiveResult.getActivatedRangeActions().stream()
                     .filter(networkAction -> remedialActionsExcludedFromSecondPreventive.contains(networkAction)).collect(Collectors.toSet());
             activatedRangeActions.addAll(postSecondPreventiveResult.getActivatedRangeActions());
             return activatedRangeActions;
-        } else {
+        } else if (postCurativeResults.containsKey(state)) {
             return initialResult.getRangeActions().stream().filter(rangeAction -> isRangeActionActivatedInCurative(state, rangeAction)).collect(Collectors.toSet());
+        } else {
+            return new HashSet<>();
         }
     }
 
