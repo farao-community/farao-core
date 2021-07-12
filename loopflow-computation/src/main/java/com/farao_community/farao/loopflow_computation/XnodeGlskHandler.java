@@ -47,6 +47,10 @@ class XnodeGlskHandler {
     private Set<Contingency> contingencies;
     private Network network;
 
+    public Network getNetwork() {
+        return network;
+    }
+
     XnodeGlskHandler(ZonalData<LinearGlsk> glskZonalData, Set<Contingency> contingencies, Network network) {
         this.glskZonalData = glskZonalData;
         this.contingencies = contingencies;

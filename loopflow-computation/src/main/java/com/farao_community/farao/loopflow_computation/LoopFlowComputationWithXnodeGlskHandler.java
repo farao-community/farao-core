@@ -26,12 +26,12 @@ public class LoopFlowComputationWithXnodeGlskHandler extends LoopFlowComputation
     private final XnodeGlskHandler xnodeGlskHandler;
 
     public LoopFlowComputationWithXnodeGlskHandler(ZonalData<LinearGlsk> glsk, ReferenceProgram referenceProgram, Set<Contingency> contingencies, Network network) {
-        super(glsk, referenceProgram);
+        super(glsk, referenceProgram, network);
         xnodeGlskHandler = new XnodeGlskHandler(glsk, contingencies, network);
     }
 
     LoopFlowComputationWithXnodeGlskHandler(ZonalData<LinearGlsk> glsk, ReferenceProgram referenceProgram, XnodeGlskHandler xnodeGlskHandler) {
-        super(glsk, referenceProgram);
+        super(glsk, referenceProgram, xnodeGlskHandler.getNetwork());
         this.xnodeGlskHandler = xnodeGlskHandler;
     }
 

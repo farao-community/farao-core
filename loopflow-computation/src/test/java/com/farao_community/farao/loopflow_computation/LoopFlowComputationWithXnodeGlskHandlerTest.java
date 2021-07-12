@@ -12,10 +12,12 @@ import com.farao_community.farao.commons.ZonalData;
 import com.farao_community.farao.data.crac_api.cnec.FlowCnec;
 import com.farao_community.farao.data.refprog.reference_program.ReferenceProgram;
 import com.farao_community.farao.sensitivity_analysis.SystematicSensitivityResult;
+import com.powsybl.iidm.network.*;
 import com.powsybl.sensitivity.factors.variables.LinearGlsk;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.Map;
 import java.util.Set;
 
 import static junit.framework.TestCase.assertEquals;
@@ -26,11 +28,34 @@ import static junit.framework.TestCase.assertEquals;
 public class LoopFlowComputationWithXnodeGlskHandlerTest {
     private static final double DOUBLE_TOLERANCE = 0.01;
 
+    private Network mockNetwork() {
+        Network network = Mockito.mock(Network.class);
+        Generator gen = Mockito.mock(Generator.class);
+        Load load = Mockito.mock(Load.class);
+        Mockito.when(network.getGenerator("gen")).thenReturn(gen);
+        Mockito.when(network.getLoad("load")).thenReturn(load);
+        Mockito.doReturn(mockInjection(true)).when(gen).getTerminal();
+        Mockito.doReturn(mockInjection(true)).when(load).getTerminal();
+        return network;
+    }
+
+    private Terminal mockInjection(boolean inMainComponent) {
+        Bus bus = Mockito.mock(Bus.class);
+        Mockito.doReturn(inMainComponent).when(bus).isInMainConnectedComponent();
+        Terminal.BusView busView = Mockito.mock(Terminal.BusView.class);
+        Mockito.doReturn(bus).when(busView).getBus();
+        Terminal terminal = Mockito.mock(Terminal.class);
+        Mockito.doReturn(busView).when(terminal).getBusView();
+        return terminal;
+    }
+
     @Test
     public void testCommercialFlowsWithCnecAfterDanglingLineContingency() {
         ZonalData<LinearGlsk> glsk = Mockito.mock(ZonalData.class);
         ReferenceProgram referenceProgram = Mockito.mock(ReferenceProgram.class);
         XnodeGlskHandler xnodeGlskHandler = Mockito.mock(XnodeGlskHandler.class);
+        Network network = mockNetwork();
+        Mockito.when(xnodeGlskHandler.getNetwork()).thenReturn(network);
 
         LoopFlowComputation loopFlowComputation = new LoopFlowComputationWithXnodeGlskHandler(
                 glsk,
@@ -57,6 +82,9 @@ public class LoopFlowComputationWithXnodeGlskHandlerTest {
         Mockito.when(systematicSensitivityResult.getSensitivityOnFlow(virtualHubLinearGlsk, cnecAfterClassicContingency)).thenReturn(2.3);
         Mockito.when(systematicSensitivityResult.getSensitivityOnFlow(classicLinearGlsk, cnecAfterDanglingContingency)).thenReturn(1.5);
         Mockito.when(systematicSensitivityResult.getSensitivityOnFlow(virtualHubLinearGlsk, cnecAfterDanglingContingency)).thenReturn(4.2);
+
+        Mockito.when(classicLinearGlsk.getGLSKs()).thenReturn(Map.of("gen", 10f));
+        Mockito.when(virtualHubLinearGlsk.getGLSKs()).thenReturn(Map.of("load", 10f));
 
         EICode frCode = new EICode("FR--------------");
         EICode alegroCode = new EICode("Alegro----------");
